@@ -6,126 +6,158 @@ from tkinter import messagebox
 from PIL import ImageTk,Image
 from cryptography.fernet import Fernet #pip install cryptography
 from tkinter import ttk
-import pyperclip #pip install pyperclip
+import pyperclip #pip install pyperclip 
 import random
-from tabulate import tabulate
+from tabulate import tabulate #pip install tabulate
+
+'''
+('CREATE DATABASE pwd IF NOT EXISTS;')
+('USE pwd;')
+('CREATE TABLE encrypt_decrypt(encryption_key varchar(200),decrypt_value text);')
+('CREATE TABLE data(user_name varchar(100), site_name varchar(100), password varchar(100));')
+'''    
 
 mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "sankeerthsanvi",database = 'pwd')
 mycursor = mydb.cursor()
 
 def unsuccess_msg():
     return messagebox.showinfo("error", "passwords cannot match!")
-
-def validateLogin(a,b,c):
-    a = username.get()
-    b = password.get()
-    c = sitename.get()
-    return c,a,b
-
-def validate_2(u,p1,p2):
-    u = username1.get()
-    p1 = pwd1.get()
-    p2 = pwd2.get()
-    return u,p1,p2
 def delete_msg():
     return messagebox.showinfo('confirmation','all records deleted')
 def success_msg():
     return messagebox.showinfo("saved", "Saved Successfully")
 def copy():
     return messagebox.showinfo("clipboard","Copied to clipboard!")
-#window
+
 tkWindow = Tk()  
 tkWindow.geometry('810x432')  
 tkWindow.title('pwd manager')
 tkWindow.configure(bg='#12c4c0')
+tkWindow.resizable(0,0)
 
 def display():
     new = Toplevel(tkWindow)
     new.title('display')
-    new.geometry('500x400')
+    new.geometry('800x500')
     new.config(bg ='black' )
 
     mycursor.execute('SELECT * FROM DATA LIMIT 15')
     my_cursor=mycursor.fetchall()
     t = tabulate(my_cursor,headers = ['Site Name','Username','Password'],tablefmt = "pretty")
+    e = Label(new,font = ('consolas 14'),fg = 'cyan',text = t,bg ='black').place(x = 0,y = 0)
+    y = 60
 
-    e = Label(new,font = ('consolas 13 bold'),fg = 'cyan',text = t,bg ='black').place(x=0,y=0)
+    def encrypt(record):
+
+        Key = Fernet.generate_key()
+        fernet = Fernet(Key)
+        password = record[0]
+        encrypt_message = str(fernet.encrypt(password.encode()))
+        real_encrypt = (encrypt_message.replace("b'",'')).replace("'",'')
+        mycursor.execute(f'INSERT INTO encrypt_decrypt Values("{real_encrypt}","{password}")')
+        mydb.commit()
+
+    for index, record in enumerate(my_cursor):
+        encrypt_button = Button(new, text="Encrypt", command = partial(encrypt,record),
+                                fg = 'cyan',bg = 'black',border = 0,
+                                font = ('Segoe_UI 12 underline'),activeforeground='#E26D5A',activebackground='black')
+        encrypt_button.place(x = 670,y = y)
+        y += 24
 
 
 def new_pass():
     global w
-    w=Frame(tkWindow,width=810,height=432,bg='#5A5A5A')
-    w.place(x=50,y=40)
-    #site label and text entry box
-    sitelabel = Label(tkWindow, text = "Site Name : ",height = 4,bg = '#5A5A5A',width = 30,font=('consolas','16','bold'),fg = 'cyan').place(x = 280, y = 55)
-    global sitename
-    sitename = StringVar()
-    siteEntry = Entry(tkWindow,width = 25,textvariable=sitename,relief = 'solid').place(x = 375, y = 120)
-    #username label and text entry box
-    global username
-    usernameLabel = Label(tkWindow, text="User Name : ",height = 2,width = 30,bg = '#5A5A5A',font=('consolas','16','bold'),fg = 'cyan').place(x = 280,y=155)
-    username = StringVar()
-    usernameEntry = Entry(tkWindow,width =25, textvariable=username,relief = 'solid').place(x = 375, y = 200)  
-    #password label and password entry box
-    passwordLabel = Label(tkWindow,text="Password : ",height = 2,width  = 30,bg = '#5A5A5A',font=('consolas','16','bold'),fg = 'cyan').place(x = 280,y = 235)  
-    global password
-    password = StringVar()
-    passwordEntry = Entry(tkWindow,width = 25, textvariable=password, show='*',relief = 'solid').place(x=375,y = 280)  
-    saveButton = Button(tkWindow, text="save", command=success_msg,border = 8,bg = '#28b3c4',font = ('consolas','14','bold')).place(x =  250,y=330)
-    display_button = Button(tkWindow,text = 'display records',command = display,border = 8,bg = '#28b3c4',font = ('consolas','14','bold')).place(x =500  ,y=330)
-    return sitename,username,password
+    w=Frame(tkWindow,width=810,height=415,bg='#5A5A5A')
+    w.place(x=50,y=50)
 
-def encrypt():
+    sitelabel = Label(tkWindow, text = "Site Name : ",height = 4,bg = '#5A5A5A',width = 30,font=('Bahnschrift','16','bold'),fg = 'cyan')
+    sitelabel.place(x = 280, y = 55)
+    siteEntry = Entry(tkWindow,width = 22,relief = 'solid',font = ('Bahnschrift 12'),border = 2,selectbackground='#00DDFF',selectforeground='black')
+    siteEntry.place(x = 355, y = 120)
+
+
+    usernameLabel = Label(tkWindow, text="User Name : ",height = 2,width = 30,bg = '#5A5A5A',
+                            font=('Bahnschrift','16','bold'),fg = 'cyan')
+    usernameLabel.place(x = 280, y = 155)
+    usernameEntry = Entry(tkWindow,width =22,relief = 'solid',font = ('Bahnschrift 12'),selectbackground='#00DDFF',selectforeground='black',border = 2)
+    usernameEntry.place(x = 355, y = 200)
+
+    passwordLabel = Label(tkWindow,text="Password : ",height = 2,width  = 30,bg = '#5A5A5A',font=('Bahnschrift','16','bold'),fg = 'cyan')
+    passwordLabel.place(x = 280,y = 235)  
+    passwordEntry = Entry(tkWindow,width = 22, show='*',relief = 'solid',font = ('Bahnschrift 12'),border = 2,selectbackground='#00DDFF',selectforeground='black')
+    passwordEntry.place(x = 355,y = 280)   
+
+
+    def save_data():
+        site_value = siteEntry.get()
+        user_value = usernameEntry.get()
+        pass_value = passwordEntry.get()
+        mycursor.execute(f"INSERT INTO DATA VALUES('{site_value}','{user_value}','{pass_value}')")
+        mydb.commit()
+        success_msg()
+
+    saveButton = Button(tkWindow, text="save", command=save_data,border = 8,bg = '#28b3c4',font = ('consolas','14','bold'),activebackground='#64C2C2')
+    saveButton.place(x =  250,y=330)
+    display_button = Button(tkWindow,text = 'display & encrypt records',command = display,border = 8,bg = '#28b3c4',
+                                font = ('consolas','14','bold'),activebackground='#64C2C2')
+    display_button.place(x =470  ,y=330)
+
+new_pass()
+
+def show_encrypt():
     s = Toplevel(tkWindow)
-    s.title('encrypt')
-    s.geometry('1000x300')
-    s.config(bg ='#5A5A5A' )
-    elabel = Label(s,text = 'enter text to be encrypted : ',bg = '#5A5A5A',font=('consolas','20','bold'),fg = 'cyan').place(x =300 ,y=50)
-    eentry = Entry(s,width = 40,border = 5,font = ('consolas 10 bold'))
-    eentry.place(x=350,y=90)
-    global key
-    key = Fernet.generate_key()
-    global fernet
-    fernet = Fernet(key)
+    s.title('Display Encrypted records')
+    s.geometry('800x450')
+    s.config(bg ='black' )
+    Scroll  = Scrollbar(s,orient = 'vertical')
+    Scroll.pack(side = RIGHT,fill = Y)
+    mycursor.execute('SELECT * FROM ENCRYPT_DECRYPT')
+    my_cursor = mycursor.fetchall()
+    t = tabulate(my_cursor,headers = ['Encrypted text','site_name'],tablefmt = "pretty",maxcolwidths=[40, None])
+    display = Label(s,font = ('consolas 12'),fg = 'cyan',text = t,bg = 'black')
+    display.place(x=0,y=0)
+    y = 60
+    def copy2(record):
+        pyperclip.copy(record[0])
+        copy()
+    for index,record in enumerate(my_cursor):
+        copy_button = Button(s,text = 'copy',command = partial(copy2,record),
+                            fg ='cyan',bg = 'black',border = 1,
+                            font = ('consolas 13 '))
+        copy_button.place(x=600,y=y)
+        y+=60
 
-    def getvalue():
-        eeval = eentry.get()
-        global encMessage
-        encMessage = str(fernet.encrypt(eeval.encode()))
 
-        enremove = (encMessage.replace("b'",'')).replace("'",'')
-        
-        enC = f'The encrypted value is: \n  {enremove}'
-        mycursor.execute(f'INSERT INTO encrypt_decrypt Values("{enremove}","{eeval}")')
-        Label(s, text=enC, font= ('Consolas 13 bold'),bg='#3DAAB6').pack(ipadx=20, ipady=20, padx=20, pady=20,fill=tkinter.BOTH, expand=True)
-        pyperclip.copy(str(encMessage))
-        Button(s,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy,font = ('consolas 10 bold')).place(x=450,y=170)
-        mycursor.close()
-    button = Button(s,text = 'encrypt!',command = getvalue,width = 15,border = 5,bg = '#5A5A5A').place(x =450,y = 120)
-    
+
 def delete():
     query = 'delete from data'
     mycursor.execute(query)
     mydb.commit()
     delete_msg()
 
-
 def decrypt():
     z = Toplevel(tkWindow)
     z .title('decrypt')
-    z.geometry('1000x300')
+    z.geometry('700x200')
     z.config(bg ='#5A5A5A' )
-    dlabel = Label(z,text = 'enter text to be decrypted : ',bg = '#5A5A5A',font=('consolas','20','bold'),fg = 'cyan').place(x =300 ,y=50)
-    dentry = ttk.Entry(z,width = 85,font = ('consolas 10 bold'))
-    dentry.place(x=230,y=90)
-    
-    def getvalue(): 
-        deval = dentry.get()
-        decMessage = fernet.decrypt(encMessage).decode()
-        dnC = ('The decrypted value is : \n {} ').format(decMessage)
+    dlabel = Label(z,text = 'enter text to be decrypted : ',bg = '#5A5A5A',font=('consolas','20','bold'),fg = 'cyan').place(x =150 ,y=40)
+    dentry = Entry(z,width = 40,font = ('consolas 12 bold'),relief = 'solid')
+    dentry.place(x=170,y=90)
+    def get_value():
+        dvalue = dentry.get()
+        query = f'SELECT site_name from ENCRYPT_DECRYPT WHERE  encryption_key = "{dvalue}"'
+        mycursor.execute(query)
+        value = mycursor.fetchone()
+        dnC = (f'The decrypted value is : \n "{value[0]}" ')
+        def copy3(record):
+            pyperclip.copy(record)  
+            copy()
+            z.destroy()
         Label(z, text=dnC, font= ('Consolas 13 bold'),bg='#3DAAB6').pack(ipadx=20, ipady=20, padx=20, pady=20,fill=tkinter.BOTH, expand=True)
-        
-    button = Button(z,text = 'decrypt!',command = getvalue,width = 10,border = 5,bg = '#5A5A5A').place(x =450,y = 120)
+        button = Button(z,text = 'copy!',font = ('consolas 10 bold'),relief = 'solid',border = 2,command = partial(copy3,value[0]),bg = 'grey',fg = 'black')
+        button.place(x=320,y=130)
+    button = Button(z,text = 'decrypt!',command = get_value,width = 10,border = 5,bg = '#5A5A5A',font = ('consolas 11 bold'),activebackground = '#5B7878').place(x =310,y = 140)
+
 
 
 def random_pass():
@@ -134,8 +166,11 @@ def random_pass():
     x.geometry('450x240')
     x.config(bg ='#5A5A5A' )
     dlabel = Label(x,text = 'enter difficulty of the password : ',bg = '#5A5A5A',font=('consolas','11','bold'),fg = 'cyan').place(x =100 ,y=50)
-    button = Button(x,text = 'easy!',width = 10,border = 5,bg = '#5A5A5A').place(x =450,y = 120)
     char = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()<>.,"
+    def copy1():
+        x.destroy()
+        return messagebox.showinfo("clipboard","Copied to clipboard!")
+
     def pwd():
         for i in range(0,5):
             password = ""
@@ -144,7 +179,7 @@ def random_pass():
                 password = password + password_char
         q = 'your password is : {}'.format(password)
         Label(x,text = q,font= ('Consolas 13 bold'),bg='#3DAAB6').pack(ipadx=10, ipady=10, padx=10, pady=10,fill=tkinter.BOTH, expand=True)
-        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy)
+        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy1)
         B.place(x =170,y = 140)
         pyperclip.copy(password)
 
@@ -156,7 +191,7 @@ def random_pass():
                 password = password + password_char
         q = 'your password is : {}'.format(password)
         Label(x,text = q,font= ('Consolas 13 bold'),bg='#3DAAB6').pack(ipadx=10, ipady=10, padx=10, pady=10,fill=tkinter.BOTH, expand=True)
-        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy)
+        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy1)
         B.place(x =170,y = 140)
         pyperclip.copy(password)
 
@@ -168,13 +203,13 @@ def random_pass():
                 password = password + password_char
         q = 'your password is : {}'.format(password)
         Label(x,text = q,font= ('Consolas 13 bold'),bg='#3DAAB6').pack(ipadx=10, ipady=10, padx=10, pady=10,fill=tkinter.BOTH, expand=True)
-        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy)
+        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy1)
         B.place(x =170,y = 140)
         pyperclip.copy(password)
 
-    Button(x,text = 'easy',command = pwd,width = 10,border = 5,bg = '#5A5A5A').place(x =75,y = 120)
-    Button(x,text = 'medium',command = pwd0,width = 10,border = 5,bg = '#5A5A5A').place(x =180,y = 120)
-    Button(x,text = 'hard',command = pwd1,width = 10,border = 5,bg = '#5A5A5A').place(x=295,y=120)  # type: ignore
+    Button(x,text = 'easy',command = pwd,width = 10,border = 5,bg = '#5A5A5A',activebackground = '#5B7878').place(x =75,y = 120)
+    Button(x,text = 'medium',command = pwd0,width = 10,border = 5,bg = '#5A5A5A',activebackground = '#5B7878').place(x =180,y = 120)
+    Button(x,text = 'hard',command = pwd1,width = 10,border = 5,bg = '#5A5A5A',activebackground = '#5B7878').place(x=295,y=120)  # type: ignore
 
 
 def toggle_win():
@@ -201,14 +236,14 @@ def toggle_win():
                        bg=fcolor,
                        activeforeground='#262626',
                        activebackground=bcolor,            
-                        command=cmd,font = ('Arial 10'))
+                        command=cmd,font = ('Franklin_Gothic_Demi_Cond 10 bold'))
                       
         myButton1.bind("<Enter>", on_entera)
         myButton1.bind("<Leave>", on_leavea)
 
         myButton1.place(x=x,y=y)
 
-    bttn(0,90,'E N C R Y P T','#0f9d9a','#12c4c0',encrypt)
+    bttn(0,90,'S H O W   E N C R Y P T E D   R E C O R D S','#0f9d9a','#12c4c0',show_encrypt)
     bttn(0,165,'D E C R Y P T ','#0f9d9a','#12c4c0',decrypt)
     bttn(0,240,'G E N E R A T E   A   P A S S W O R D ','#0f9d9a','#12c4c0',random_pass)
     bttn(0,315,'D E L E T E   R E C O R D S ','#0f9d9a','#12c4c0',delete)
@@ -237,54 +272,47 @@ Button(tkWindow,image=img1,
        activebackground='#12c4c0').place(x=0,y=0)
 
 def update_password():
-    w=Frame(tkWindow,width=810,height=432,bg='#28b3c4')
-    w.place(x=50,y=28)
-    #site label and text entry box
-    usernamelabel = Label(tkWindow, text = "User name : ",height = 2,bg = '#28b3c4',width = 17,font=('consolas','16','bold')).place(x = 360, y = 78)
-    global username1
-    username1 = StringVar()
-    userentry = Entry(tkWindow,width = 25,textvariable=username1,relief = 'solid').place(x = 380, y = 120)
-    #username label and text entry box
-    usernameLabel = Label(tkWindow, text="Old password : ",height = 2,width = 17,bg = '#28b3c4',font=('consolas','16','bold')).place(x = 360,y=160)
-    global pwd1
-    pwd1 = StringVar()
-    pwd1Entry = Entry(tkWindow,width = 25, textvariable=pwd1,relief= 'solid').place(x = 380, y = 200)  
-
-    #password label and password entry box
-    passwordLabel = Label(tkWindow,text="New password : ",height = 2,width  = 17,bg = '#28b3c4',font=('consolas','16','bold')).place(x =360 ,y = 240)  
-    global pwd2
-    pwd2 = StringVar()
-    pwd2Entry = Entry(tkWindow,width = 25, textvariable=pwd2, show='*',relief = 'solid').place(x=380,y = 280)  
-    saveButton = Button(tkWindow, text="save", command=success_msg,border = 8,bg = '#5A5A5A',font = ('consolas','13','bold')).place(x =  410,y=330) 
-    return username1,pwd1,pwd2
-
-l,m,n  = update_password()
-validate_2 = partial(validate_2,l,m,n)
-
-e,f,g = new_pass()
-validateLogin = partial(validateLogin,e,f,g)
-
-Button(tkWindow,width=55,height=1,text='U P D A T E   P A S S W O R D',pady=4,border=0, command = update_password,bg='#28b3c4',fg='black',activebackground='dark red',activeforeground='white').place(x=425,y=0)
-Button(tkWindow,width=55,height=1,text='S T O R E  P A S S W O R D',pady=4,border=0, command = new_pass,bg='#5A5A5A',fg='cyan',activebackground='#EFAD29',activeforeground='white').place(x=50,y=0)
+    w=Frame(tkWindow,width=810,height=415,bg='#28b3c4')
+    w.place(x=50,y=50)
 
 
-tkWindow.mainloop()
-n,p,o = validateLogin()
-mycursor = mydb.cursor()
-
-d,r,s = validate_2()
-print(d,r,s)
-
-query = "INSERT INTO data(site_name,user_name,password)values('{}','{}','{}')".format(n,p,o)
-mycursor.execute(query)
-mydb.commit()
+    usernamelabel = Label(tkWindow, text = "User name : ",height = 2,bg = '#28b3c4',width = 17,font=('Bahnschrift','16','bold'))
+    usernamelabel.place(x = 360, y = 78)
+    userentry = Entry(tkWindow,width = 22,relief = 'solid',font = ('Bahnschrift 12'),border=2,selectbackground='#00DDFF',selectforeground='black')
+    userentry.place(x = 360, y = 120)
 
 
-query = "UPDATE data SET password = %s WHERE  user_name = %s"
-val=(s,d)
-mycursor.execute(query,val)
-mydb.commit()
+    pass_1 = Label(tkWindow, text="Old password : ",height = 2,width = 17,bg = '#28b3c4',font=('Bahnschrift','16','bold'))
+    pass_1.place(x = 360,y=160)
+    pass_1_Entry = Entry(tkWindow,width = 22,relief= 'solid',font = ('Bahnschrift 12'),border = 2,selectbackground='#00DDFF',selectforeground='black')
+    pass_1_Entry.place(x = 360, y = 200)  
+
+
+    pass_2 = Label(tkWindow,text="New password : ",height = 2,width  = 17,bg = '#28b3c4',font=('Bahnschrift','16','bold'))
+    pass_2.place(x =360 ,y = 240)
+    pass_2_Entry = Entry(tkWindow,width = 22, show='*',relief = 'solid',font = ('Bahnschrift 12'),border =2,selectbackground='#00DDFF',selectforeground='black')
+    pass_2_Entry.place(x=360,y = 280)
+
+    def save_value():
+        user_value = userentry.get()
+        pass_1_Entry_value = pass_1_Entry.get()
+        pass_2_Entry_Value = pass_2_Entry.get()
+        mycursor.execute(f'UPDATE data SET password = "{pass_2_Entry_Value}" WHERE  user_name = "{user_value}"')
+        mydb.commit()
+        success_msg()
+
+    saveButton = Button(tkWindow, text="save", command=save_value,border = 8,bg = '#5A5A5A',font = ('Bahnschrift','13','bold'),activebackground='#5B7878')
+    saveButton.place(x =  430,y=330) 
+
+Button(tkWindow,width=48,height=2,text='U P D A T E   P A S S W O R D',pady=4,border=0, command = update_password,bg='#28b3c4',fg='black',
+            activebackground='#408FA0',activeforeground='white',font = ('Bahnschrift 12 ')).place(x=425,y=0)
+Button(tkWindow,width=44,height=2,text='S T O R E  P A S S W O R D',pady=4,border=0, command = new_pass,bg='#5A5A5A',
+            fg='cyan',activebackground='#408FA0',activeforeground='white',font = ('Bahnschrift 12 ')).place(x=50,y=0)
 
 mycursor.execute("select * from data")
 for i in  mycursor:
     print(i)
+
+tkWindow.mainloop()
+mydb.close()
+
