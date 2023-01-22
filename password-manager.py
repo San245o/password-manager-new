@@ -17,7 +17,7 @@ from tabulate import tabulate #pip install tabulate
 ('CREATE TABLE data(user_name varchar(100), site_name varchar(100), password varchar(100));')
 '''    
 
-mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "sankeerthsanvi",database = 'pwd')
+mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "<your sql password sir>",database = 'pwd')
 mycursor = mydb.cursor()
 
 def unsuccess_msg():
@@ -41,20 +41,21 @@ def display():
     new.geometry('800x500')
     new.config(bg ='black' )
 
-    mycursor.execute('SELECT * FROM DATA LIMIT 15')
+    mycursor.execute('SELECT site_name,username,password FROM DATA ORDER BY ID DESC LIMIT 5')
     my_cursor=mycursor.fetchall()
-    t = tabulate(my_cursor,headers = ['Site Name','Username','Password'],tablefmt = "pretty")
-    e = Label(new,font = ('consolas 14'),fg = 'cyan',text = t,bg ='black').place(x = 0,y = 0)
+    table = tabulate(my_cursor,headers = ['Site Name','Username','Password'],tablefmt = "pretty")
+    display_label = Label(new,font = ('consolas 15'),fg = 'cyan',text = table,bg ='black').place(x = 0,y = 0)
     y = 60
 
     def encrypt(record):
 
         Key = Fernet.generate_key()
         fernet = Fernet(Key)
-        password = record[0]
+        password = record[2]
+        site_name = record[0]
         encrypt_message = str(fernet.encrypt(password.encode()))
         real_encrypt = (encrypt_message.replace("b'",'')).replace("'",'')
-        mycursor.execute(f'INSERT INTO encrypt_decrypt Values("{real_encrypt}","{password}")')
+        mycursor.execute(f'INSERT INTO encrypt_decrypt(ENCRYPTION_KEY,password,site_name) Values("{real_encrypt}","{password}","{site_name}")')
         mydb.commit()
 
     for index, record in enumerate(my_cursor):
@@ -66,7 +67,7 @@ def display():
 
 
 def new_pass():
-    global w
+
     w=Frame(tkWindow,width=810,height=415,bg='#5A5A5A')
     w.place(x=50,y=50)
 
@@ -76,8 +77,7 @@ def new_pass():
     siteEntry.place(x = 355, y = 120)
 
 
-    usernameLabel = Label(tkWindow, text="User Name : ",height = 2,width = 30,bg = '#5A5A5A',
-                            font=('Bahnschrift','16','bold'),fg = 'cyan')
+    usernameLabel = Label(tkWindow, text="User Name : ",height = 2,width = 30,bg = '#5A5A5A',font=('Bahnschrift','16','bold'),fg = 'cyan')
     usernameLabel.place(x = 280, y = 155)
     usernameEntry = Entry(tkWindow,width =22,relief = 'solid',font = ('Bahnschrift 12'),selectbackground='#00DDFF',selectforeground='black',border = 2)
     usernameEntry.place(x = 355, y = 200)
@@ -86,16 +86,20 @@ def new_pass():
     passwordLabel.place(x = 280,y = 235)  
     passwordEntry = Entry(tkWindow,width = 22, show='*',relief = 'solid',font = ('Bahnschrift 12'),border = 2,selectbackground='#00DDFF',selectforeground='black')
     passwordEntry.place(x = 355,y = 280)   
-
-
+    
     def save_data():
         site_value = siteEntry.get()
         user_value = usernameEntry.get()
         pass_value = passwordEntry.get()
-        mycursor.execute(f"INSERT INTO DATA VALUES('{site_value}','{user_value}','{pass_value}')")
+
+        mycursor.execute(f"INSERT INTO DATA(site_name,username,password) VALUES('{site_value}','{user_value}','{pass_value}')")
         mydb.commit()
         success_msg()
+        siteEntry.delete(0,'end')
+        usernameEntry.delete(0,'end')
+        passwordEntry.delete(0,'end')
 
+ 
     saveButton = Button(tkWindow, text="save", command=save_data,border = 8,bg = '#28b3c4',font = ('consolas','14','bold'),activebackground='#64C2C2')
     saveButton.place(x =  250,y=330)
     display_button = Button(tkWindow,text = 'display & encrypt records',command = display,border = 8,bg = '#28b3c4',
@@ -111,7 +115,7 @@ def show_encrypt():
     s.config(bg ='black' )
     Scroll  = Scrollbar(s,orient = 'vertical')
     Scroll.pack(side = RIGHT,fill = Y)
-    mycursor.execute('SELECT * FROM ENCRYPT_DECRYPT')
+    mycursor.execute('SELECT ENCRYPTION_KEY,SITE_NAME FROM ENCRYPT_DECRYPT ORDER BY ID DESC LIMIT 6')
     my_cursor = mycursor.fetchall()
     t = tabulate(my_cursor,headers = ['Encrypted text','site_name'],tablefmt = "pretty",maxcolwidths=[40, None])
     display = Label(s,font = ('consolas 12'),fg = 'cyan',text = t,bg = 'black')
@@ -120,6 +124,7 @@ def show_encrypt():
     def copy2(record):
         pyperclip.copy(record[0])
         copy()
+        s.destroy()
     for index,record in enumerate(my_cursor):
         copy_button = Button(s,text = 'copy',command = partial(copy2,record),
                             fg ='cyan',bg = 'black',border = 1,
@@ -145,7 +150,7 @@ def decrypt():
     dentry.place(x=170,y=90)
     def get_value():
         dvalue = dentry.get()
-        query = f'SELECT site_name from ENCRYPT_DECRYPT WHERE  encryption_key = "{dvalue}"'
+        query = f'SELECT password from ENCRYPT_DECRYPT WHERE  encryption_key = "{dvalue}"'
         mycursor.execute(query)
         value = mycursor.fetchone()
         dnC = (f'The decrypted value is : \n "{value[0]}" ')
@@ -203,21 +208,19 @@ def random_pass():
                 password = password + password_char
         q = 'your password is : {}'.format(password)
         Label(x,text = q,font= ('Consolas 13 bold'),bg='#3DAAB6').pack(ipadx=10, ipady=10, padx=10, pady=10,fill=tkinter.BOTH, expand=True)
-        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy1)
+        B = Button(x,text= 'copy to clipboard',width = 15,border = 3,bg = '#19474D',command=copy,font = ('consolas 10 bold'))
         B.place(x =170,y = 140)
         pyperclip.copy(password)
 
-    Button(x,text = 'easy',command = pwd,width = 10,border = 5,bg = '#5A5A5A',activebackground = '#5B7878').place(x =75,y = 120)
-    Button(x,text = 'medium',command = pwd0,width = 10,border = 5,bg = '#5A5A5A',activebackground = '#5B7878').place(x =180,y = 120)
-    Button(x,text = 'hard',command = pwd1,width = 10,border = 5,bg = '#5A5A5A',activebackground = '#5B7878').place(x=295,y=120)  # type: ignore
+    Button(x,text = 'easy',command = pwd,width = 13,border = 5,bg = '#5A5A5A',activebackground = '#5B7878',font = ('consolas 10 bold')).place(x =75,y = 120)
+    Button(x,text = 'medium',command = pwd0,width = 13,border = 5,bg = '#5A5A5A',activebackground = '#5B7878',font = ('consolas 10 bold')).place(x =180,y = 120)
+    Button(x,text = 'hard',command = pwd1,width = 13,border = 5,bg = '#5A5A5A',activebackground = '#5B7878',font = ('consolas 10 bold')).place(x=295,y=120)  
 
 
 def toggle_win():
     f1=Frame(tkWindow ,width=286,height=500,bg='#12c4c0')
     f1.place(x=0,y=0)
 
-
-    #buttons
     def bttn(x,y,text,bcolor,fcolor,cmd):
      
         def on_entera(e):
@@ -248,19 +251,14 @@ def toggle_win():
     bttn(0,240,'G E N E R A T E   A   P A S S W O R D ','#0f9d9a','#12c4c0',random_pass)
     bttn(0,315,'D E L E T E   R E C O R D S ','#0f9d9a','#12c4c0',delete)
 
-    #
+    
     def dele():
         f1.destroy()
-
+        
     global img2
     img2 = ImageTk.PhotoImage(Image.open("close.png"))
 
-    Button(f1,
-           image=img2,
-           border=0,
-           command=dele,
-           bg='#12c4c0',
-           activebackground='#12c4c0').place(x=0,y=0)
+    Button(f1,image=img2,border=0,command=dele,bg='#12c4c0',activebackground='#12c4c0').place(x=0,y=0)
     
 
 img1 = ImageTk.PhotoImage(Image.open("open5.png"))
@@ -275,18 +273,15 @@ def update_password():
     w=Frame(tkWindow,width=810,height=415,bg='#28b3c4')
     w.place(x=50,y=50)
 
-
     usernamelabel = Label(tkWindow, text = "User name : ",height = 2,bg = '#28b3c4',width = 17,font=('Bahnschrift','16','bold'))
     usernamelabel.place(x = 360, y = 78)
     userentry = Entry(tkWindow,width = 22,relief = 'solid',font = ('Bahnschrift 12'),border=2,selectbackground='#00DDFF',selectforeground='black')
     userentry.place(x = 360, y = 120)
 
-
     pass_1 = Label(tkWindow, text="Old password : ",height = 2,width = 17,bg = '#28b3c4',font=('Bahnschrift','16','bold'))
     pass_1.place(x = 360,y=160)
     pass_1_Entry = Entry(tkWindow,width = 22,relief= 'solid',font = ('Bahnschrift 12'),border = 2,selectbackground='#00DDFF',selectforeground='black')
     pass_1_Entry.place(x = 360, y = 200)  
-
 
     pass_2 = Label(tkWindow,text="New password : ",height = 2,width  = 17,bg = '#28b3c4',font=('Bahnschrift','16','bold'))
     pass_2.place(x =360 ,y = 240)
@@ -300,6 +295,9 @@ def update_password():
         mycursor.execute(f'UPDATE data SET password = "{pass_2_Entry_Value}" WHERE  user_name = "{user_value}"')
         mydb.commit()
         success_msg()
+        userentry.delete(0,'end')
+        pass_1_Entry.delete(0,'end')
+        pass_2_Entry.delete(0,'end')
 
     saveButton = Button(tkWindow, text="save", command=save_value,border = 8,bg = '#5A5A5A',font = ('Bahnschrift','13','bold'),activebackground='#5B7878')
     saveButton.place(x =  430,y=330) 
@@ -314,5 +312,5 @@ for i in  mycursor:
     print(i)
 
 tkWindow.mainloop()
+mycursor.close()
 mydb.close()
-
