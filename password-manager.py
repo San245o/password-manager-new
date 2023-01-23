@@ -111,16 +111,25 @@ new_pass()
 def show_encrypt():
     s = Toplevel(tkWindow)
     s.title('Display Encrypted records')
-    s.geometry('800x450')
+    s.geometry('700x450')
     s.config(bg ='black' )
+    frame = Frame(s)
+    frame.grid(row = 0,column = 0)
     Scroll  = Scrollbar(s,orient = 'vertical')
-    Scroll.pack(side = RIGHT,fill = Y)
-    mycursor.execute('SELECT ENCRYPTION_KEY,SITE_NAME FROM ENCRYPT_DECRYPT ORDER BY ID DESC LIMIT 6')
+
+    mycursor.execute('SELECT ENCRYPTION_KEY,SITE_NAME FROM ENCRYPT_DECRYPT ORDER BY ID DESC')
     my_cursor = mycursor.fetchall()
     t = tabulate(my_cursor,headers = ['Encrypted text','site_name'],tablefmt = "pretty",maxcolwidths=[40, None])
-    display = Label(s,font = ('consolas 12'),fg = 'cyan',text = t,bg = 'black')
+    display = Text(s,font = ('consolas 12'),fg = 'cyan',bg = 'black')
+    display.insert(1.0,t)
+    Scroll.config(command = display.yview)
     display.place(x=0,y=0)
-    y = 60
+    Scroll.place(x = 0,y = 450)
+
+    x = 60
+    scroll  = Scrollbar(s,orient = 'vertical')
+    scroll.place(x = 0,y = 450)
+
     def copy2(record):
         pyperclip.copy(record[0])
         copy()
@@ -129,10 +138,10 @@ def show_encrypt():
         copy_button = Button(s,text = 'copy',command = partial(copy2,record),
                             fg ='cyan',bg = 'black',border = 1,
                             font = ('consolas 13 '))
-        copy_button.place(x=600,y=y)
-        y+=60
+        copy_button.place(x = x,y = 40)
+        display.window_create(1.0, window=copy_button,side  = RIGHT)
 
-
+        x += 40
 
 def delete():
     query = 'delete from data'
