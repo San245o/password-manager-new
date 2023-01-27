@@ -17,7 +17,7 @@ from tabulate import tabulate #pip install tabulate
 ('CREATE TABLE data(user_name varchar(100), site_name varchar(100), password varchar(100));')
 '''    
 
-mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "sankeerthsanvi",database = 'pwd')
+mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "<sql_pass>",database = 'pwd')
 mycursor = mydb.cursor()
 
 def unsuccess_msg():
