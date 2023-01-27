@@ -3,7 +3,7 @@ import mysql.connector  #pip install  mysql-connector
 from tkinter import *
 from functools import partial
 from tkinter import messagebox
-from PIL import ImageTk,Image
+from PIL import ImageTk,Image #pip install pillow
 from cryptography.fernet import Fernet #pip install cryptography
 from tkinter import ttk
 import pyperclip #pip install pyperclip 
@@ -17,7 +17,7 @@ from tabulate import tabulate #pip install tabulate
 ('CREATE TABLE data(user_name varchar(100), site_name varchar(100), password varchar(100));')
 '''    
 
-mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "<your sql password sir>",database = 'pwd')
+mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "sankeerthsanvi",database = 'pwd')
 mycursor = mydb.cursor()
 
 def unsuccess_msg():
@@ -41,11 +41,11 @@ def display():
     new.geometry('800x500')
     new.config(bg ='black' )
 
-    mycursor.execute('SELECT site_name,username,password FROM DATA ORDER BY ID DESC LIMIT 5')
+    mycursor.execute('SELECT site_name,username,password FROM DATA ORDER BY ID DESC LIMIT 15')
     my_cursor=mycursor.fetchall()
     table = tabulate(my_cursor,headers = ['Site Name','Username','Password'],tablefmt = "pretty")
     display_label = Label(new,font = ('consolas 15'),fg = 'cyan',text = table,bg ='black').place(x = 0,y = 0)
-    y = 60
+    y = 68
 
     def encrypt(record):
 
@@ -61,8 +61,8 @@ def display():
     for index, record in enumerate(my_cursor):
         encrypt_button = Button(new, text="Encrypt", command = partial(encrypt,record),
                                 fg = 'cyan',bg = 'black',border = 0,
-                                font = ('Segoe_UI 12 underline'),activeforeground='#E26D5A',activebackground='black')
-        encrypt_button.place(x = 670,y = y)
+                                font = ('Segoe_UI 13 underline'),activeforeground='#E26D5A',activebackground='black')
+        encrypt_button.place(x = 690,y = y)
         y += 24
 
 
@@ -75,7 +75,6 @@ def new_pass():
     sitelabel.place(x = 280, y = 55)
     siteEntry = Entry(tkWindow,width = 22,relief = 'solid',font = ('Bahnschrift 12'),border = 2,selectbackground='#00DDFF',selectforeground='black')
     siteEntry.place(x = 355, y = 120)
-
 
     usernameLabel = Label(tkWindow, text="User Name : ",height = 2,width = 30,bg = '#5A5A5A',font=('Bahnschrift','16','bold'),fg = 'cyan')
     usernameLabel.place(x = 280, y = 155)
@@ -211,7 +210,7 @@ def random_pass():
         pyperclip.copy(password)
 
     Button(x,text = 'easy',command = pwd,width = 13,border = 5,bg = '#5A5A5A',activebackground = '#5B7878',font = ('consolas 10 bold')).place(x =75,y = 120)
-    Button(x,text = 'medium',command = pwd0,width = 13,border = 5,bg = '#5A5A5A',activebackground = '#5B7878',font = ('consolas 10 bold')).place(x =180,y = 120)
+    Button(x,text = 'medium',command = pwd0,width = 13,border = 5,bg = '#5A5A5A',activebackground = '#5B7878',font = ('consolas 10 bold')).place(x =185,y = 120)
     Button(x,text = 'hard',command = pwd1,width = 13,border = 5,bg = '#5A5A5A',activebackground = '#5B7878',font = ('consolas 10 bold')).place(x=295,y=120)  
 
 
@@ -252,7 +251,7 @@ def toggle_win():
     
     def dele():
         f1.destroy()
-        
+
     global img2
     img2 = ImageTk.PhotoImage(Image.open("close.png"))
 
@@ -290,7 +289,7 @@ def update_password():
         user_value = userentry.get()
         pass_1_Entry_value = pass_1_Entry.get()
         pass_2_Entry_Value = pass_2_Entry.get()
-        mycursor.execute(f'UPDATE data SET password = "{pass_2_Entry_Value}" WHERE  user_name = "{user_value}"')
+        mycursor.execute(f'UPDATE data SET password = "{pass_2_Entry_Value}" WHERE  username = "{user_value}"')
         mydb.commit()
         success_msg()
         userentry.delete(0,'end')
@@ -312,3 +311,4 @@ for i in  mycursor:
 tkWindow.mainloop()
 mycursor.close()
 mydb.close()
+
