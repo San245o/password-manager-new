@@ -13,8 +13,8 @@ from tabulate import tabulate #pip install tabulate
 '''
 ('CREATE DATABASE pwd IF NOT EXISTS;')
 ('USE pwd;')
-('CREATE TABLE encrypt_decrypt(encryption_key varchar(200),decrypt_value text);')
-('CREATE TABLE data(user_name varchar(100), site_name varchar(100), password varchar(100));')
+('CREATE TABLE encrypt_decrypt(id INT AUTO_INCREMENT,encryption_key varchar(200),decrypt_value text);')
+('CREATE TABLE data(id INT AUTO_INCREMENT,user_name varchar(100), site_name varchar(100), password varchar(100));')
 '''    
 
 mydb = mysql.connector.connect(host="localhost", user = "root",passwd = "<sql_pass>",database = 'pwd')
